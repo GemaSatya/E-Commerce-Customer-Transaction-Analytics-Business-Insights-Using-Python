@@ -1,0 +1,139 @@
+{% if has_data %}
+<div class="context">
+  Showing <strong>{{ selected_city }}</strong> · Updated from the cleaned
+  transaction dataset
+</div>
+<section class="kpis">
+  <article class="kpi">
+    <span>Total transactions</span
+    ><strong>{{ "{:,}".format(kpi.total_transaction) }}</strong
+    ><small>Unique transaction IDs</small>
+  </article>
+  <article class="kpi">
+    <span>Customers</span
+    ><strong>{{ "{:,}".format(kpi.total_customer) }}</strong
+    ><small>Distinct shoppers</small>
+  </article>
+  <article class="kpi">
+    <span>Active cities</span
+    ><strong>{{ "{:,}".format(kpi.total_city) }}</strong
+    ><small>With recorded activity</small>
+  </article>
+  <article class="kpi accent">
+    <span>Coupon burn rate</span><strong>{{ coupon.burn_rate }}%</strong
+    ><small>{{ "{:,}".format(coupon.coupon_used) }} coupons redeemed</small>
+  </article>
+</section>
+
+<section class="grid two">
+  <article class="card wide">
+    <div class="card-heading">
+      <div>
+        <p class="eyebrow">Momentum</p>
+        <h2>Monthly transactions</h2>
+      </div>
+      <span class="tag">Trend</span>
+    </div>
+    <div class="line-chart">
+      <svg
+        viewBox="0 0 620 230"
+        role="img"
+        aria-label="Monthly transaction trend"
+      >
+        <line class="axis" x1="34" y1="196" x2="586" y2="196" />
+        <polyline
+          class="trend"
+          points="{% for point in monthly_points %}{{ point.x }},{{ point.y }} {% endfor %}"
+        />
+        {% for point in monthly_points %}
+        <circle class="dot" cx="{{ point.x }}" cy="{{ point.y }}" r="4">
+          <title>{{ monthly_labels[loop.index0] }}: {{ point.value }}</title>
+        </circle>
+        {% endfor %}
+      </svg>
+      <div class="x-labels">
+        {% for label in monthly_labels %}<span>{{ label }}</span>{% endfor %}
+      </div>
+    </div>
+  </article>
+  <article class="card">
+    <div class="card-heading">
+      <div>
+        <p class="eyebrow">Audience</p>
+        <h2>By gender</h2>
+      </div>
+      <span class="tag">Mix</span>
+    </div>
+    <div class="bars gender">
+      {% for item in gender %}
+      <div class="bar-row">
+        <span>{{ item.name }}</span>
+        <div class="bar-track">
+          <i
+            style="width: {{ (item.value / gender[0].value * 100) if gender else 0 }}%"
+          ></i>
+        </div>
+        <b>{{ "{:,}".format(item.value) }}</b>
+      </div>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+
+<section class="grid three">
+  <article class="card">
+    <div class="card-heading">
+      <div>
+        <p class="eyebrow">Geography</p>
+        <h2>Top cities</h2>
+      </div>
+    </div>
+    <div class="ranking">
+      {% for item in cities %}
+      <div class="rank-row">
+        <em>{{ "%02d"|format(loop.index) }}</em
+        ><span
+          >{{ item.name }}<small
+            >{{ "{:,}".format(item.customers) }} customers</small
+          ></span
+        ><b>{{ "{:,}".format(item.transactions) }}</b>
+      </div>
+      {% endfor %}
+    </div>
+  </article>
+  <article class="card">
+    <div class="card-heading">
+      <div>
+        <p class="eyebrow">Marketplace</p>
+        <h2>Top merchants</h2>
+      </div>
+    </div>
+    <div class="ranking">
+      {% for item in merchants %}
+      <div class="rank-row">
+        <em>{{ "%02d"|format(loop.index) }}</em><span>{{ item.name }}</span
+        ><b>{{ "{:,}".format(item.value) }}</b>
+      </div>
+      {% endfor %}
+    </div>
+  </article>
+  <article class="card">
+    <div class="card-heading">
+      <div>
+        <p class="eyebrow">Loyalty</p>
+        <h2>Top customers</h2>
+      </div>
+    </div>
+    <div class="ranking">
+      {% for item in customers %}
+      <div class="rank-row">
+        <em>{{ "%02d"|format(loop.index) }}</em><span>{{ item.name }}</span
+        ><b>{{ "{:,}".format(item.value) }}</b>
+      </div>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+{% else %}
+<div class="empty">No transactions are available for this filter.</div>
+{% endif %}

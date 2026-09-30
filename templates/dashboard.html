@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Commerce intelligence dashboard</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='dashboard.css') }}"
+    />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">E-commerce analytics</p>
+          <h1>Commerce intelligence</h1>
+          <p class="subtitle">
+            A clear view of customer behavior, marketplace momentum, and
+            promotion performance.
+          </p>
+        </div>
+        <div class="filter">
+          <label for="city-filter">Explore a city</label>
+          <select
+            id="city-filter"
+            name="city"
+            hx-get="/dashboard"
+            hx-target="#dashboard-content"
+            hx-trigger="change"
+            hx-push-url="true"
+          >
+            <option value="">All cities</option>
+            {% for city in city_options %}
+            <option value="{{ city }}">{{ city }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </header>
+      <section id="dashboard-content" aria-live="polite">
+        {% include "dashboard_content.html" %}
+      </section>
+      <footer>
+        Powered by the Python analysis pipeline · HTMX keeps filters fast and
+        lightweight.
+      </footer>
+    </main>
+  </body>
+</html>

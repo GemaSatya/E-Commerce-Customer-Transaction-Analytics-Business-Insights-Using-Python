@@ -438,3 +438,237 @@ def generate_summary(df):
     }
 
     return summary
+
+
+# ==========================================================
+# BRANCH ANALYSIS
+# ==========================================================
+
+
+def branch_performance(df):
+    """
+    Analyze transaction performance by branch.
+    """
+
+    result = (
+        df.groupby("branch_name")
+        .agg(
+            total_transaction=("transaction_id", "count"),
+            unique_customer=("customer_id", "nunique"),
+            unique_merchant=("merchant_name", "nunique"),
+        )
+        .sort_values("total_transaction", ascending=False)
+    )
+
+    result["avg_transaction_per_customer"] = (
+        result["total_transaction"] / result["unique_customer"]
+    ).round(2)
+
+    return result
+
+
+def top_branch_transaction(df, limit=5):
+    """
+    Find branches with highest transaction volume.
+    """
+
+    result = (
+        df.groupby("branch_name")
+        .size()
+        .sort_values(ascending=False)
+        .head(limit)
+    )
+
+    return result
+
+
+# ==========================================================
+# COUPON DEEP DIVE
+# ==========================================================
+
+
+def coupon_breakdown(df):
+    """
+    Break down coupon usage by coupon name.
+    """
+
+    coupon_df = df[df["coupon_name"].notna()].copy()
+
+    if coupon_df.empty:
+        return pd.DataFrame(
+            columns=["coupon_name", "issued", "redeemed", "burn_rate"]
+        )
+
+    result = (
+        coupon_df.groupby("coupon_name")
+        .agg(
+            issued=("transaction_id", "count"),
+            redeemed=("burn_date", lambda x: x.notna().sum()),
+        )
+        .sort_values("issued", ascending=False)
+    )
+
+    result["burn_rate"] = (result["redeemed"] / result["issued"] * 100).round(1)
+
+    return result
+
+
+def coupon_trend(df):
+    """
+    Monthly coupon issuance and redemption trend.
+    """
+
+    coupon_df = df[df["coupon_name"].notna()].copy()
+
+    if coupon_df.empty:
+        return pd.DataFrame(columns=["issued", "redeemed"])
+
+    result = (
+        coupon_df.groupby("month")
+        .agg(
+            issued=("transaction_id", "count"),
+            redeemed=("burn_date", lambda x: x.notna().sum()),
+        )
+        .sort_index()
+    )
+
+    return result
+
+
+# ==========================================================
+# CUSTOMER SEGMENTATION
+# ==========================================================
+
+
+def customer_segments(df):
+    """
+    Segment customers by transaction frequency.
+    """
+
+    customer_txns = df.groupby("customer_id").size()
+
+    segments = {
+        "one_time": int((customer_txns == 1).sum()),
+        "occasional": int(((customer_txns >= 2) & (customer_txns <= 5)).sum()),
+        "regular": int(((customer_txns >= 6) & (customer_txns <= 15)).sum()),
+        "loyal": int((customer_txns > 15).sum()),
+    }
+
+    total = sum(segments.values()) or 1
+    segments_pct = {k: round(v / total * 100, 1) for k, v in segments.items()}
+
+    return {"counts": segments, "percentages": segments_pct}
+
+
+def avg_transactions_per_customer(df):
+    """
+    Calculate average transactions per customer.
+    """
+
+    total_txns = len(df)
+    unique_customers = df["customer_id"].nunique()
+
+    return round(total_txns / unique_customers, 2) if unique_customers else 0
+
+
+# ==========================================================
+# TEMPORAL PATTERNS
+# ==========================================================
+
+
+def day_of_week_pattern(df):
+    """
+    Transaction distribution by day of week.
+    """
+
+    df_copy = df.copy()
+    df_copy["day_of_week"] = df_copy["transaction_date"].dt.day_name()
+
+    result = (
+        df_copy.groupby("day_of_week")
+        .size()
+        .reindex(
+            [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
+            ]
+        )
+        .fillna(0)
+        .astype(int)
+    )
+
+    return result
+
+
+def weekly_trend(df):
+    """
+    Weekly transaction trend.
+    """
+
+    df_copy = df.copy()
+    df_copy["week"] = df_copy["transaction_date"].dt.to_period("W").astype(str)
+
+    result = df_copy.groupby("week").size().sort_index()
+
+    return result
+
+
+def transaction_velocity(df):
+    """
+    Average transactions per day.
+    """
+
+    date_range = (
+        df["transaction_date"].max() - df["transaction_date"].min()
+    ).days
+
+    return round(len(df) / date_range, 2) if date_range > 0 else 0
+
+
+# ==========================================================
+# MERCHANT DEEP DIVE
+# ==========================================================
+
+
+def merchant_market_share(df, limit=10):
+    """
+    Calculate market share for top merchants.
+    """
+
+    result = (
+        df.groupby("merchant_name")
+        .size()
+        .sort_values(ascending=False)
+        .head(limit)
+    )
+
+    total = len(df)
+    share = (result / total * 100).round(1)
+
+    return share
+
+
+def merchant_city_dominance(df):
+    """
+    Find dominant merchant per city with transaction count.
+    """
+
+    result = (
+        df.groupby(["city_name", "merchant_name"])
+        .size()
+        .reset_index(name="transactions")
+    )
+
+    result = result.sort_values(
+        ["city_name", "transactions"], ascending=[True, False]
+    )
+
+    idx = result.groupby("city_name")["transactions"].idxmax()
+    dominant = result.loc[idx].sort_values("transactions", ascending=False)
+
+    return dominant

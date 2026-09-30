@@ -246,11 +246,25 @@ The generated visualization files will be stored in:
 reports/images/
 ```
 
+# Interactive Dashboard
+
+Run the analysis as a local HTMX dashboard:
+
+```bash
+pip install -r requirements.txt
+python app.py
+```
+
+Open `http://127.0.0.1:5000` in a browser. The dashboard loads the same Excel
+dataset and preprocessing functions used by `main.py`. Use the city selector
+to request a filtered dashboard fragment from Python without a full page
+reload.
+
 # Future Improvements
 
 Future development plans:
 
-- Build interactive dashboard using Streamlit
+- Add date-range filtering and RFM segmentation
 - Add customer segmentation using RFM analysis
 - Develop customer churn prediction model
 - Integrate SQL database
